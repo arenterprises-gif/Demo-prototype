@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ClerKneu — Business Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --navy: #0D1B2A;
+  --navy2: #132338;
+  --blue: #1A73E8;
+  --blue-light: #4A90E8;
+  --gold: #F4A300;
+  --green: #00C48C;
+  --red: #FF4757;
+  --purple: #7C4DFF;
+  --bg: #0A1520;
+  --card: #111E2E;
+  --card2: #162030;
+  --border: rgba(255,255,255,0.07);
+  --text: #E2EBF6;
+  --muted: #6B8096;
+  --font: 'Sora', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+
+/* ── LOGIN SCREEN ─────────────────────────────── */
+#loginScreen{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .5s ease}
+#loginScreen.hidden{opacity:0;pointer-events:none}
+.login-wrap{display:flex;width:900px;max-width:95vw;height:540px;border-radius:20px;overflow:hidden;border:1px solid var(--border);box-shadow:0 40px 120px rgba(0,0,0,.6)}
+.login-left{flex:1;background:linear-gradient(145deg,#0D1B2A 0%,#132338 50%,#0D1B2A 100%);padding:48px 44px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+.login-left::before{content:'';position:absolute;width:280px;height:280px;border-radius:50%;border:1px solid rgba(26,115,232,0.15);top:-80px;right:-80px}
+.login-left::after{content:'';position:absolute;width:180px;height:180px;border-radius:50%;border:1px solid rgba(244,163,0,0.1);bottom:40px;left:-60px}
+.login-logo{display:flex;align-items:center;gap:12px}
+.login-logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.login-logo-text{font-size:22px;font-weight:700;color:#fff}
+.login-logo-sub{font-size:10px;color:var(--gold);font-weight:500;letter-spacing:.5px}
+.login-hero{position:relative;z-index:1}
+.login-hero h2{font-size:28px;font-weight:700;line-height:1.3;color:#fff;margin-bottom:12px}
+.login-hero p{font-size:13px;color:var(--muted);line-height:1.7}
+.login-sectors{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.sector-chip{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid var(--border);color:var(--muted)}
+.login-right{flex:1;background:var(--card);padding:48px 44px;display:flex;flex-direction:column;justify-content:center}
+.login-right h3{font-size:22px;font-weight:700;margin-bottom:6px}
+.login-right .sub{font-size:13px;color:var(--muted);margin-bottom:32px}
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.form-group input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:.2s}
+.form-group input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(26,115,232,0.12)}
+.form-group input::placeholder{color:var(--muted)}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--blue),var(--purple));border:none;border-radius:10px;color:#fff;font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;transition:.2s;margin-top:4px;position:relative;overflow:hidden}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(26,115,232,0.35)}
+.login-btn:active{transform:translateY(0)}
+.login-btn.loading{pointer-events:none}
+.login-btn .btn-text{transition:.2s}
+.error-msg{background:rgba(255,71,87,0.1);border:1px solid rgba(255,71,87,0.3);color:var(--red);padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:14px;display:none}
+.error-msg.show{display:block}
+.hint-box{background:rgba(26,115,232,0.07);border:1px solid rgba(26,115,232,0.2);border-radius:8px;padding:10px 14px;margin-top:14px}
+.hint-box p{font-size:11px;color:var(--muted)}.hint-box span{color:var(--blue);font-weight:600}
+@keyframes loginFadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.login-wrap{animation:loginFadeIn .5s ease}
+/* ── DASHBOARD HIDDEN INITIALLY ──────────────── */
+#appWrapper{opacity:0;transition:opacity .5s ease}
+#appWrapper.visible{opacity:1}
+/* SIDEBAR */
+.sidebar{position:fixed;left:0;top:0;width:240px;height:100vh;background:var(--navy);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:.3s}
+.logo-area{padding:22px 20px 18px;border-bottom:1px solid var(--border)}
+.logo-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.logo-tag{font-size:10px;color:var(--gold);font-weight:500;margin-top:2px;letter-spacing:.5px}
+
+.nav-section{padding:18px 12px 8px;font-size:9.5px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;transition:.2s;margin:2px 8px;font-size:13px;font-weight:500;color:var(--muted)}
+.nav-item:hover{background:rgba(255,255,255,0.05);color:var(--text)}
+.nav-item.active{background:rgba(26,115,232,0.15);color:var(--blue);border-left:3px solid var(--blue)}
+.nav-item .icon{width:18px;height:18px;opacity:.8}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:600}
+
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.user-info{display:flex;align-items:center;gap:10px}
+.user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--purple));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.user-name{font-size:13px;font-weight:600}
+.user-role{font-size:10px;color:var(--muted)}
+
+/* MAIN */
+.main{margin-left:240px;min-height:100vh;transition:.3s}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:50}
+.page-title{font-size:18px;font-weight:700}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.topbar-right{display:flex;align-items:center;gap:14px}
+.btn{padding:8px 18px;border-radius:8px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;transition:.2s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-light)}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+.notif-bell{position:relative;cursor:pointer;padding:8px;border-radius:8px;background:var(--card)}
+.notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;background:var(--red);border-radius:50%;border:2px solid var(--bg)}
+.live-badge{display:flex;align-items:center;gap:6px;background:rgba(0,196,140,0.12);color:var(--green);padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid rgba(0,196,140,0.25)}
+.live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+
+/* CONTENT */
+.content{padding:24px 28px}
+
+/* SECTOR TABS */
+.sector-tabs{display:flex;gap:8px;margin-bottom:24px}
+.tab{display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:10px;cursor:pointer;border:1px solid var(--border);background:var(--card);transition:.25s;font-size:13px;font-weight:500;color:var(--muted)}
+.tab:hover{border-color:rgba(255,255,255,0.15);color:var(--text)}
+.tab.active{border-color:transparent;color:#fff;font-weight:600}
+.tab.all.active{background:linear-gradient(135deg,#1A73E8,#7C4DFF)}
+.tab.hospital.active{background:linear-gradient(135deg,#00C48C,#00A878)}
+.tab.shop.active{background:linear-gradient(135deg,#F4A300,#E8920A)}
+.tab.construction.active{background:linear-gradient(135deg,#FF4757,#E03040)}
+.tab-icon{font-size:16px}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;position:relative;overflow:hidden;transition:.25s;cursor:default}
+.stat-card:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px)}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.blue::before{background:linear-gradient(90deg,var(--blue),var(--blue-light))}
+.stat-card.green::before{background:linear-gradient(90deg,var(--green),#00A878)}
+.stat-card.gold::before{background:linear-gradient(90deg,var(--gold),#E8920A)}
+.stat-card.purple::before{background:linear-gradient(90deg,var(--purple),#9C6EFF)}
+.stat-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.stat-icon.blue{background:rgba(26,115,232,0.15)}
+.stat-icon.green{background:rgba(0,196,140,0.15)}
+.stat-icon.gold{background:rgba(244,163,0,0.15)}
+.stat-icon.purple{background:rgba(124,77,255,0.15)}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:700;letter-spacing:-.5px;font-family:var(--mono)}
+.stat-change{display:flex;align-items:center;gap:4px;margin-top:6px;font-size:11px;font-weight:600}
+.stat-change.up{color:var(--green)}
+.stat-change.down{color:var(--red)}
+
+/* CHARTS ROW */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.card-title{font-size:14px;font-weight:600}
+.card-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.chart-wrap{position:relative;height:200px}
+
+/* MODULES GRID */
+.modules-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.module-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;transition:.25s;cursor:pointer}
+.module-card:hover{border-color:var(--blue);background:var(--card2);transform:translateY(-2px)}
+.module-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.module-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.module-title{font-size:15px;font-weight:700}
+.module-desc{font-size:11px;color:var(--muted)}
+.module-stats{display:flex;flex-direction:column;gap:8px}
+.module-stat-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid var(--border)}
+.module-stat-label{font-size:11px;color:var(--muted)}
+.module-stat-val{font-size:13px;font-weight:600;font-family:var(--mono)}
+.progress-bar{height:4px;background:rgba(255,255,255,0.07);border-radius:2px;margin-top:10px;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;transition:width 1.5s ease}
+
+/* BOTTOM ROW */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px}
+table.data-table{width:100%;border-collapse:collapse}
+table.data-table th{font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:6px 10px;text-align:left;border-bottom:1px solid var(--border)}
+table.data-table td{padding:10px 10px;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.04)}
+table.data-table tr:last-child td{border-bottom:none}
+table.data-table tr:hover td{background:rgba(255,255,255,0.03)}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:600}
+.badge-green{background:rgba(0,196,140,0.15);color:var(--green)}
+.badge-gold{background:rgba(244,163,0,0.15);color:var(--gold)}
+.badge-red{background:rgba(255,71,87,0.15);color:var(--red)}
+.badge-blue{background:rgba(26,115,232,0.15);color:var(--blue)}
+
+/* ALERTS */
+.alerts-list{display:flex;flex-direction:column;gap:8px}
+.alert-item{display:flex;align-items:flex-start;gap:10px;padding:12px;border-radius:10px;border:1px solid var(--border)}
+.alert-item.warning{background:rgba(244,163,0,0.06);border-color:rgba(244,163,0,0.2)}
+.alert-item.danger{background:rgba(255,71,87,0.06);border-color:rgba(255,71,87,0.2)}
+.alert-item.info{background:rgba(26,115,232,0.06);border-color:rgba(26,115,232,0.2)}
+.alert-item.success{background:rgba(0,196,140,0.06);border-color:rgba(0,196,140,0.2)}
+.alert-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.alert-title{font-size:12px;font-weight:600}
+.alert-msg{font-size:11px;color:var(--muted);margin-top:2px}
+.alert-time{font-size:10px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+
+/* Sector view panels */
+.sector-panel{display:none}
+.sector-panel.active{display:block}
+.section-divider{display:flex;align-items:center;gap:12px;margin:22px 0 16px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.section-divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ── MODALS ───────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.25s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:28px;width:420px;max-width:90vw;transform:translateY(20px);transition:.3s;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.modal-overlay.show .modal-box{transform:translateY(0)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:4px}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px}
+.modal-close{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;padding:0}
+.modal-close:hover{color:var(--text)}
+.export-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.export-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--card2);cursor:pointer;transition:.2s;font-family:var(--font);color:var(--text);font-size:12px;font-weight:500}
+.export-btn:hover{border-color:var(--blue);background:rgba(26,115,232,0.08)}
+.export-btn .eicon{font-size:24px}
+.modal-input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:var(--font);font-size:13px;outline:none;transition:.2s;margin-bottom:12px}
+.modal-input:focus{border-color:var(--blue)}
+.modal-select{appearance:none;-webkit-appearance:none}
+.modal-label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* ── TOAST ───────────────────────────────────── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--card);border:1px solid var(--green);color:var(--green);padding:12px 22px;border-radius:30px;font-size:13px;font-weight:600;z-index:9000;opacity:0;pointer-events:none;transition:.3s;white-space:nowrap}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* Responsive */
+@media(max-width:1100px){.stats-grid{grid-template-columns:repeat(2,1fr)}.charts-row{grid-template-columns:1fr}.modules-grid{grid-template-columns:repeat(2,1fr)}.bottom-row{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{width:0;overflow:hidden}.main{margin-left:0}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.stat-card,.chart-card,.module-card,.table-card{animation:fadeUp .4s ease both}
+.stat-card:nth-child(1){animation-delay:.05s}
+.stat-card:nth-child(2){animation-delay:.1s}
+.stat-card:nth-child(3){animation-delay:.15s}
+.stat-card:nth-child(4){animation-delay:.2s}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--navy);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <div class="login-left">
+      <div class="login-logo">
+        <div class="login-logo-icon">⚡</div>
+        <div>
+          <div class="login-logo-text">ClerKneu</div>
+          <div class="login-logo-sub">BUSINESS INTELLIGENCE</div>
+        </div>
+      </div>
+      <div class="login-hero">
+        <h2>One platform.<br/>Every business.<br/>Total control.</h2>
+        <p>Manage your hospital, shops and construction projects — all from a single intelligent dashboard built for your business.</p>
+        <div class="login-sectors">
+          <div class="sector-chip">🏥 Hospital</div>
+          <div class="sector-chip">🛒 Retail</div>
+          <div class="sector-chip">🏗 Construction</div>
+          <div class="sector-chip">📊 Analytics</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">© 2025 ClerKneu · Jhansi, U.P.</div>
+    </div>
+    <div class="login-right">
+      <h3>Welcome back 👋</h3>
+      <p class="sub">Sign in to your business dashboard</p>
+      <div class="error-msg" id="errorMsg">❌ Incorrect credentials. Please try again.</div>
+      <div class="form-group">
+        <label>Email / Username</label>
+        <input type="text" id="loginUser" placeholder="owner@yourbusiness.com" value="owner@clerkneu.com"/>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Enter your password" value=""/>
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">
+        <span class="btn-text">Sign In →</span>
+      </button>
+      <div class="hint-box">
+        <p>Demo credentials — Email: <span>owner@clerkneu.com</span></p>
+        <p style="margin-top:3px">Password: <span>Jhansi@2025</span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="appWrapper">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo-area">
+    <div class="logo-name">⚡ ClerKneu</div>
+    <div class="logo-tag">Business Intelligence Platform</div>
+  </div>
+
+  <div class="nav-section">Overview</div>
+  <div class="nav-item active" onclick="setTab('all',this)">
+    <span class="icon">🏠</span> Dashboard
+  </div>
+
+  <div class="nav-section">Sectors</div>
+  <div class="nav-item" onclick="setTab('hospital',this)">
+    <span class="icon">🏥</span> Hospital
+    <span class="nav-badge">12</span>
+  </div>
+  <div class="nav-item" onclick="setTab('shop',this)">
+    <span class="icon">🛒</span> Retail Shops
+  </div>
+  <div class="nav-item" onclick="setTab('construction',this)">
+    <span class="icon">🏗</span> Construction
+    <span class="nav-badge">3</span>
+  </div>
+
+  <div class="nav-section">Management</div>
+  <div class="nav-item" onclick="alert('Staff module — coming in Phase 3!')">
+    <span class="icon">👥</span> Staff & Payroll
+  </div>
+  <div class="nav-item" onclick="alert('Reports module — coming in Phase 3!')">
+    <span class="icon">📊</span> Reports
+  </div>
+  <div class="nav-item" onclick="alert('Settings — coming soon!')">
+    <span class="icon">⚙️</span> Settings
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-info">
+      <div class="user-avatar">RK</div>
+      <div>
+        <div class="user-name">Owner</div>
+        <div class="user-role">Super Admin · Jhansi</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="pageTitle">Business Overview</div>
+      <div class="page-sub" id="pageSub">All sectors · Today, <span class="today-date"></span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><span class="live-dot"></span> Live Data</div>
+      <button class="btn btn-ghost" onclick="showExport()">📥 Export</button>
+      <button class="btn btn-primary" onclick="showAddRecord()">+ Add Record</button>
+      <div class="notif-bell">🔔<div class="notif-dot"></div></div>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- TABS -->
+    <div class="sector-tabs">
+      <div class="tab all active" onclick="switchSector('all',this)"><span class="tab-icon">🌐</span> All Sectors</div>
+      <div class="tab hospital" onclick="switchSector('hospital',this)"><span class="tab-icon">🏥</span> Hospital</div>
+      <div class="tab shop" onclick="switchSector('shop',this)"><span class="tab-icon">🛒</span> Shops</div>
+      <div class="tab construction" onclick="switchSector('construction',this)"><span class="tab-icon">🏗</span> Construction</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         ALL SECTORS PANEL
+    ═══════════════════════════════════════════════ -->
+    <div class="sector-panel active" id="panel-all">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon blue">💰</div>
+          <div class="stat-label">Total Revenue Today</div>
+          <div class="stat-value" id="totalRev">₹0</div>
+          <div class="stat-change up">↑ 8.4% vs yesterday</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">📈</div>
+          <div class="stat-label">Net Profit (Month)</div>
+          <div class="stat-value" id="netProfit">₹0</div>
+          <div class="stat-change up">↑ 12.1% vs last month</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon gold">👥</div>
+          <div class="stat-label">Active Staff Today</div>
+          <div class="stat-value" id="activeStaff">0</div>
+          <div class="stat-change up">↑ 2 from yesterday</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple">⚠️</div>
+          <div class="stat-label">Pending Alerts</div>
+          <div class="stat-value" id="alertCount">0</div>
+          <div class="stat-change down">↑ 3 new today</div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Revenue by Sector — Last 7 Days</div>
+              <div class="card-sub">Hospital · Shops · Construction combined</div>
+            </div>
+            <select style="background:var(--card2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:7px;font-family:var(--font);font-size:12px">
+              <option>Last 7 Days</option><option>This Month</option><option>This Year</option>
+            </select>
+          </div>
+          <div class="chart-wrap"><canvas id="revenueChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Revenue Split</div>
+              <div class="card-sub">By sector · This month</div>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="splitChart"></canvas></div>
+        </div>
+      </div>
+
+      <!-- Module cards -->
+      <div class="section-divider">Sector Summary</div>
+      <div class="modules-grid">
+        <!-- Hospital -->
+        <div class="module-card" onclick="switchSector('hospital',document.querySelectorAll('.tab')[1])">
+          <div class="module-header">
+            <div class="module-icon" style="background:rgba(0,196,140,0.15)">🏥</div>
+            <div>
+              <div class="module-title">Hospital</div>
+              <div class="module-desc">Jhansi City Hospital</div>
+            </div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat-row"><span class="module-stat-label">OPD Today</span><span class="module-stat-val" style="color:var(--green)">47 patients</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">IPD Admitted</span><span class="module-stat-val">12 beds</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Today's Revenue</span><span class="module-stat-val" style="color:var(--green)">₹38,400</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Medicine Stock</span><span class="module-stat-val" style="color:var(--gold)">84% OK</span></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:84%;background:linear-gradient(90deg,var(--green),#00A878)"></div></div>
+        </div>
+
+        <!-- Shop -->
+        <div class="module-card" onclick="switchSector('shop',document.querySelectorAll('.tab')[2])">
+          <div class="module-header">
+            <div class="module-icon" style="background:rgba(244,163,0,0.15)">🛒</div>
+            <div>
+              <div class="module-title">Retail Shops</div>
+              <div class="module-desc">2 shops · Jhansi</div>
+            </div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat-row"><span class="module-stat-label">Shop 1 Sales</span><span class="module-stat-val" style="color:var(--gold)">₹14,200</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Shop 2 Sales</span><span class="module-stat-val" style="color:var(--gold)">₹9,600</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Total Transactions</span><span class="module-stat-val">63 today</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Low Stock Items</span><span class="module-stat-val" style="color:var(--red)">7 items ⚠️</span></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:67%;background:linear-gradient(90deg,var(--gold),#E8920A)"></div></div>
+        </div>
+
+        <!-- Construction -->
+        <div class="module-card" onclick="switchSector('construction',document.querySelectorAll('.tab')[3])">
+          <div class="module-header">
+            <div class="module-icon" style="background:rgba(255,71,87,0.15)">🏗</div>
+            <div>
+              <div class="module-title">Construction</div>
+              <div class="module-desc">3 active projects</div>
+            </div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat-row"><span class="module-stat-label">Active Projects</span><span class="module-stat-val">3 sites</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Pending Payments</span><span class="module-stat-val" style="color:var(--red)">₹2,40,000</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Labour on Site</span><span class="module-stat-val">38 workers</span></div>
+            <div class="module-stat-row"><span class="module-stat-label">Month Revenue</span><span class="module-stat-val" style="color:var(--blue)">₹4,80,000</span></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:55%;background:linear-gradient(90deg,var(--red),#E03040)"></div></div>
+        </div>
+      </div>
+
+      <!-- Bottom -->
+      <div class="bottom-row">
+        <div class="table-card">
+          <div class="card-header">
+            <div class="card-title">Recent Transactions</div>
+            <button class="btn btn-ghost" style="font-size:11px;padding:5px 12px">View All</button>
+          </div>
+          <table class="data-table">
+            <thead><tr><th>Description</th><th>Sector</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>OPD Consultation × 8</td><td><span class="badge badge-green">Hospital</span></td><td style="font-family:var(--mono);color:var(--green)">+₹3,200</td><td><span class="badge badge-green">Paid</span></td></tr>
+              <tr><td>Cement Purchase - Site 2</td><td><span class="badge badge-red">Construct</span></td><td style="font-family:var(--mono);color:var(--red)">-₹18,000</td><td><span class="badge badge-gold">Pending</span></td></tr>
+              <tr><td>Shop 1 Daily Sales</td><td><span class="badge badge-gold">Retail</span></td><td style="font-family:var(--mono);color:var(--green)">+₹14,200</td><td><span class="badge badge-green">Paid</span></td></tr>
+              <tr><td>Medicine Restock</td><td><span class="badge badge-green">Hospital</span></td><td style="font-family:var(--mono);color:var(--red)">-₹8,600</td><td><span class="badge badge-green">Done</span></td></tr>
+              <tr><td>Labour Payment - Site 1</td><td><span class="badge badge-red">Construct</span></td><td style="font-family:var(--mono);color:var(--red)">-₹42,000</td><td><span class="badge badge-blue">Processing</span></td></tr>
+              <tr><td>IPD Billing - 4 patients</td><td><span class="badge badge-green">Hospital</span></td><td style="font-family:var(--mono);color:var(--green)">+₹22,400</td><td><span class="badge badge-green">Paid</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="table-card">
+          <div class="card-header">
+            <div class="card-title">🚨 Smart Alerts</div>
+            <span class="badge badge-red">6 active</span>
+          </div>
+          <div class="alerts-list">
+            <div class="alert-item danger">
+              <div class="alert-icon" style="background:rgba(255,71,87,0.15)">🏥</div>
+              <div><div class="alert-title">Hospital — Paracetamol stock critical</div><div class="alert-msg">Only 48 strips left. Reorder needed within 2 days.</div><div class="alert-time">2 min ago</div></div>
+            </div>
+            <div class="alert-item warning">
+              <div class="alert-icon" style="background:rgba(244,163,0,0.15)">🏗</div>
+              <div><div class="alert-title">Site 2 — Material delivery delayed</div><div class="alert-msg">Steel rods delivery postponed by supplier by 3 days.</div><div class="alert-time">1 hr ago</div></div>
+            </div>
+            <div class="alert-item warning">
+              <div class="alert-icon" style="background:rgba(244,163,0,0.15)">🛒</div>
+              <div><div class="alert-title">Shop 1 — 7 items below reorder level</div><div class="alert-msg">Rice, Oil, Soap, and 4 others need restocking.</div><div class="alert-time">3 hr ago</div></div>
+            </div>
+            <div class="alert-item success">
+              <div class="alert-icon" style="background:rgba(0,196,140,0.15)">💰</div>
+              <div><div class="alert-title">Monthly target 73% achieved</div><div class="alert-msg">₹7.3L of ₹10L target reached with 8 days left.</div><div class="alert-time">Today</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         HOSPITAL PANEL
+    ═══════════════════════════════════════════════ -->
+    <div class="sector-panel" id="panel-hospital">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-icon green">🏥</div>
+          <div class="stat-label">OPD Patients Today</div>
+          <div class="stat-value">47</div>
+          <div class="stat-change up">↑ 6 from yesterday</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue">🛏️</div>
+          <div class="stat-label">IPD Beds Occupied</div>
+          <div class="stat-value">12 / 20</div>
+          <div class="stat-change up">60% occupancy</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon gold">💊</div>
+          <div class="stat-label">Today's Revenue</div>
+          <div class="stat-value">₹38,400</div>
+          <div class="stat-change up">↑ 11% vs avg</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple">👨‍⚕️</div>
+          <div class="stat-label">Doctors On Duty</div>
+          <div class="stat-value">4 / 6</div>
+          <div class="stat-change down">2 on leave today</div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header"><div><div class="card-title">OPD Patient Trend — 7 Days</div><div class="card-sub">Daily patient footfall</div></div></div>
+          <div class="chart-wrap"><canvas id="hospitalChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header"><div><div class="card-title">Department Revenue</div><div class="card-sub">OPD vs IPD vs Pharmacy</div></div></div>
+          <div class="chart-wrap"><canvas id="hospDeptChart"></canvas></div>
+        </div>
+      </div>
+      <div class="bottom-row">
+        <div class="table-card">
+          <div class="card-header"><div class="card-title">Today's OPD Appointments</div></div>
+          <table class="data-table">
+            <thead><tr><th>Patient</th><th>Doctor</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Ramesh Kumar</td><td>Dr. Sharma</td><td style="font-family:var(--mono)">09:30</td><td><span class="badge badge-green">Completed</span></td></tr>
+              <tr><td>Sunita Devi</td><td>Dr. Gupta</td><td style="font-family:var(--mono)">10:00</td><td><span class="badge badge-green">Completed</span></td></tr>
+              <tr><td>Anil Yadav</td><td>Dr. Sharma</td><td style="font-family:var(--mono)">11:30</td><td><span class="badge badge-blue">In Progress</span></td></tr>
+              <tr><td>Priya Singh</td><td>Dr. Verma</td><td style="font-family:var(--mono)">12:00</td><td><span class="badge badge-gold">Waiting</span></td></tr>
+              <tr><td>Mohit Jain</td><td>Dr. Gupta</td><td style="font-family:var(--mono)">12:30</td><td><span class="badge badge-gold">Waiting</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-card">
+          <div class="card-header"><div class="card-title">💊 Medicine Stock Alerts</div></div>
+          <table class="data-table">
+            <thead><tr><th>Medicine</th><th>Stock</th><th>Min Level</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Paracetamol 500mg</td><td style="font-family:var(--mono)">48 strips</td><td>100</td><td><span class="badge badge-red">Critical</span></td></tr>
+              <tr><td>Amoxicillin 250mg</td><td style="font-family:var(--mono)">120 strips</td><td>80</td><td><span class="badge badge-green">OK</span></td></tr>
+              <tr><td>ORS Sachets</td><td style="font-family:var(--mono)">60 pcs</td><td>100</td><td><span class="badge badge-gold">Low</span></td></tr>
+              <tr><td>Insulin Vials</td><td style="font-family:var(--mono)">24 vials</td><td>20</td><td><span class="badge badge-green">OK</span></td></tr>
+              <tr><td>Dettol Antiseptic</td><td style="font-family:var(--mono)">8 bottles</td><td>15</td><td><span class="badge badge-red">Critical</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         SHOP PANEL
+    ═══════════════════════════════════════════════ -->
+    <div class="sector-panel" id="panel-shop">
+      <div class="stats-grid">
+        <div class="stat-card gold">
+          <div class="stat-icon gold">🛒</div>
+          <div class="stat-label">Shop 1 Sales Today</div>
+          <div class="stat-value">₹14,200</div>
+          <div class="stat-change up">↑ 5% avg</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-icon blue">🏪</div>
+          <div class="stat-label">Shop 2 Sales Today</div>
+          <div class="stat-value">₹9,600</div>
+          <div class="stat-change down">↓ 2% avg</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">🧾</div>
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value">63</div>
+          <div class="stat-change up">Avg bill ₹378</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-icon purple">📦</div>
+          <div class="stat-label">Low Stock Items</div>
+          <div class="stat-value">7 items</div>
+          <div class="stat-change down">Reorder needed</div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header"><div><div class="card-title">Shop Sales — Last 7 Days</div><div class="card-sub">Shop 1 vs Shop 2 comparison</div></div></div>
+          <div class="chart-wrap"><canvas id="shopChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header"><div><div class="card-title">Top Categories</div><div class="card-sub">Revenue by product type</div></div></div>
+          <div class="chart-wrap"><canvas id="shopCatChart"></canvas></div>
+        </div>
+      </div>
+      <div class="bottom-row">
+        <div class="table-card">
+          <div class="card-header"><div class="card-title">Today's Top Sales</div></div>
+          <table class="data-table">
+            <thead><tr><th>Item</th><th>Qty Sold</th><th>Revenue</th><th>Shop</th></tr></thead>
+            <tbody>
+              <tr><td>Basmati Rice 5kg</td><td>24</td><td style="font-family:var(--mono);color:var(--green)">₹2,880</td><td><span class="badge badge-gold">Shop 1</span></td></tr>
+              <tr><td>Sunflower Oil 1L</td><td>18</td><td style="font-family:var(--mono);color:var(--green)">₹2,340</td><td><span class="badge badge-blue">Shop 2</span></td></tr>
+              <tr><td>Tata Salt 1kg</td><td>35</td><td style="font-family:var(--mono);color:var(--green)">₹875</td><td><span class="badge badge-gold">Shop 1</span></td></tr>
+              <tr><td>Biscuits Assorted</td><td>42</td><td style="font-family:var(--mono);color:var(--green)">₹1,260</td><td><span class="badge badge-blue">Shop 2</span></td></tr>
+              <tr><td>Detergent 1kg</td><td>15</td><td style="font-family:var(--mono);color:var(--green)">₹1,800</td><td><span class="badge badge-gold">Shop 1</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-card">
+          <div class="card-header"><div class="card-title">📦 Inventory Reorder List</div><span class="badge badge-red">7 items</span></div>
+          <table class="data-table">
+            <thead><tr><th>Item</th><th>Current</th><th>Reorder Qty</th><th>Priority</th></tr></thead>
+            <tbody>
+              <tr><td>Basmati Rice 5kg</td><td>12 bags</td><td>50 bags</td><td><span class="badge badge-red">Urgent</span></td></tr>
+              <tr><td>Sunflower Oil 1L</td><td>8 btls</td><td>30 btls</td><td><span class="badge badge-red">Urgent</span></td></tr>
+              <tr><td>Wheat Flour 5kg</td><td>18 bags</td><td>40 bags</td><td><span class="badge badge-gold">Medium</span></td></tr>
+              <tr><td>Sugar 1kg</td><td>22 pkts</td><td>50 pkts</td><td><span class="badge badge-gold">Medium</span></td></tr>
+              <tr><td>Soap Bars (Lux)</td><td>30 pcs</td><td>100 pcs</td><td><span class="badge badge-green">Normal</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         CONSTRUCTION PANEL
+    ═══════════════════════════════════════════════ -->
+    <div class="sector-panel" id="panel-construction">
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <div class="stat-icon blue">🏗</div>
+          <div class="stat-label">Active Projects</div>
+          <div class="stat-value">3 Sites</div>
+          <div class="stat-change up">₹2.4Cr total value</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon green">👷</div>
+          <div class="stat-label">Labour on Site</div>
+          <div class="stat-value">38</div>
+          <div class="stat-change up">↑ 4 from yesterday</div>
+        </div>
+        <div class="stat-card red" style="--card:var(--card)">
+          <div class="stat-icon" style="background:rgba(255,71,87,0.15)">💸</div>
+          <div class="stat-label">Pending Payments</div>
+          <div class="stat-value" style="color:var(--red)">₹2,40,000</div>
+          <div class="stat-change down">3 invoices due</div>
+        </div>
+        <div class="stat-card gold">
+          <div class="stat-icon gold">📅</div>
+          <div class="stat-label">This Month Revenue</div>
+          <div class="stat-value">₹4,80,000</div>
+          <div class="stat-change up">↑ On track</div>
+        </div>
+      </div>
+      <div class="charts-row">
+        <div class="chart-card">
+          <div class="card-header"><div><div class="card-title">Project Cost vs Revenue — Monthly</div><div class="card-sub">Income vs expenditure per month</div></div></div>
+          <div class="chart-wrap"><canvas id="constChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header"><div><div class="card-title">Project Completion</div><div class="card-sub">Current status of all 3 sites</div></div></div>
+          <div class="chart-wrap"><canvas id="constProgChart"></canvas></div>
+        </div>
+      </div>
+      <div class="bottom-row">
+        <div class="table-card">
+          <div class="card-header"><div class="card-title">Active Projects Overview</div></div>
+          <table class="data-table">
+            <thead><tr><th>Project</th><th>Progress</th><th>Budget</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Sipri Bazar Residential</td><td style="font-family:var(--mono)">68%</td><td>₹85 Lakh</td><td><span class="badge badge-green">On Track</span></td></tr>
+              <tr><td>Civil Lines Commercial</td><td style="font-family:var(--mono)">42%</td><td>₹1.1 Cr</td><td><span class="badge badge-gold">Delayed</span></td></tr>
+              <tr><td>Sadar Renovation Work</td><td style="font-family:var(--mono)">91%</td><td>₹18 Lakh</td><td><span class="badge badge-blue">Finishing</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-card">
+          <div class="card-header"><div class="card-title">🧾 Pending Vendor Payments</div></div>
+          <table class="data-table">
+            <thead><tr><th>Vendor</th><th>Item</th><th>Amount</th><th>Due</th></tr></thead>
+            <tbody>
+              <tr><td>Jhansi Steel Traders</td><td>Steel Rods</td><td style="font-family:var(--mono);color:var(--red)">₹95,000</td><td><span class="badge badge-red">Overdue</span></td></tr>
+              <tr><td>MP Cement Agency</td><td>OPC Cement 100 bags</td><td style="font-family:var(--mono);color:var(--gold)">₹72,000</td><td><span class="badge badge-gold">Due Today</span></td></tr>
+              <tr><td>Bundela Sand Supplier</td><td>River Sand 8 loads</td><td style="font-family:var(--mono);color:var(--gold)">₹48,000</td><td><span class="badge badge-gold">In 2 days</span></td></tr>
+              <tr><td>Electricals Jhansi</td><td>Wiring Materials</td><td style="font-family:var(--mono)">₹25,000</td><td><span class="badge badge-green">In 7 days</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+</div><!-- /appWrapper -->
+
+<!-- EXPORT MODAL -->
+<div class="modal-overlay" id="exportModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title">📥 Export Report</div>
+    <div class="modal-sub">Download data from any sector as a file</div>
+    <div class="export-grid">
+      <button class="export-btn" onclick="doExport('pdf')"><span class="eicon">📄</span>PDF Report</button>
+      <button class="export-btn" onclick="doExport('excel')"><span class="eicon">📊</span>Excel Sheet</button>
+      <button class="export-btn" onclick="doExport('csv')"><span class="eicon">📋</span>CSV Data</button>
+      <button class="export-btn" onclick="doExport('print')"><span class="eicon">🖨️</span>Print View</button>
+    </div>
+    <div style="margin-bottom:10px"><label class="modal-label">Select Sector</label>
+    <select class="modal-input modal-select">
+      <option>All Sectors (Combined)</option>
+      <option>Hospital Only</option>
+      <option>Retail Shops Only</option>
+      <option>Construction Only</option>
+    </select></div>
+    <div><label class="modal-label">Date Range</label>
+    <select class="modal-input modal-select">
+      <option>Today</option><option>This Week</option><option>This Month</option><option>This Year</option>
+    </select></div>
+  </div>
+</div>
+
+<!-- ADD RECORD MODAL -->
+<div class="modal-overlay" id="addModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">×</button>
+    <div class="modal-title">+ Add New Record</div>
+    <div class="modal-sub">Manually add a transaction or entry</div>
+    <div class="modal-row">
+      <div>
+        <label class="modal-label">Sector</label>
+        <select class="modal-input modal-select" id="recSector">
+          <option>Hospital</option><option>Shop 1</option><option>Shop 2</option><option>Construction</option>
+        </select>
+      </div>
+      <div>
+        <label class="modal-label">Type</label>
+        <select class="modal-input modal-select" id="recType">
+          <option>Income</option><option>Expense</option><option>Stock Entry</option><option>Payment</option>
+        </select>
+      </div>
+    </div>
+    <label class="modal-label">Amount (₹)</label>
+    <input class="modal-input" type="number" id="recAmt" placeholder="e.g. 5000"/>
+    <label class="modal-label">Description</label>
+    <input class="modal-input" type="text" id="recDesc" placeholder="e.g. OPD billing, cement purchase..."/>
+    <label class="modal-label">Date</label>
+    <input class="modal-input" type="date" id="recDate"/>
+    <button class="login-btn" id="submitRecBtn" onclick="submitRecord()" style="margin-top:4px">
+      <span>Save Record</span>
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ── Safe init — runs AFTER login ─────────────────────────────────────────
+function initApp() {
+  // Date (safe now — DOM is visible)
+  const dateStr = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.querySelectorAll('.today-date').forEach(el => el.textContent = dateStr);
+
+  // Counters
+  animateCounter(document.getElementById('totalRev'), 62200, '₹');
+  animateCounter(document.getElementById('netProfit'), 218400, '₹');
+  animateCounter(document.getElementById('activeStaff'), 67, '', ' staff');
+  animateCounter(document.getElementById('alertCount'), 6, '', ' alerts');
+}
+
+// ── LOGIN LOGIC ──────────────────────────────────────────────────────────
+function doLogin() {
+  const user = document.getElementById('loginUser').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn  = document.getElementById('loginBtn');
+  const err  = document.getElementById('errorMsg');
+
+  btn.classList.add('loading');
+  btn.querySelector('.btn-text').textContent = 'Signing in...';
+  err.classList.remove('show');
+
+  setTimeout(() => {
+    const validUsers = [
+      {email:'owner@clerkneu.com', pass:'Jhansi@2025'},
+      {email:'admin', pass:'admin123'},
+      {email:'demo', pass:'demo'},
+    ];
+    const ok = validUsers.some(u => u.email === user && u.pass === pass);
+    if (ok) {
+      btn.querySelector('.btn-text').textContent = '✓ Welcome!';
+      btn.style.background = 'linear-gradient(135deg,#00C48C,#00A878)';
+      setTimeout(() => {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('appWrapper').classList.add('visible');
+        setTimeout(initApp, 300);
+      }, 700);
+    } else {
+      err.classList.add('show');
+      btn.classList.remove('loading');
+      btn.querySelector('.btn-text').textContent = 'Sign In →';
+      document.getElementById('loginPass').value = '';
+      document.getElementById('loginPass').focus();
+    }
+  }, 1200);
+}
+
+// Allow Enter key to submit
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !document.getElementById('loginScreen').classList.contains('hidden')) doLogin();
+  if (e.key === 'Escape') closeModal();
+});
+
+// ── EXPORT MODAL ──────────────────────────────────────────────────────────
+function showExport() {
+  document.getElementById('exportModal').classList.add('show');
+}
+function doExport(type) {
+  const btn = event.target;
+  btn.textContent = '⏳ Preparing...';
+  setTimeout(() => {
+    btn.textContent = '✅ Downloaded!';
+    btn.style.background = 'var(--green)';
+    setTimeout(() => closeModal(), 1200);
+  }, 1500);
+}
+
+// ── ADD RECORD MODAL ──────────────────────────────────────────────────────
+function showAddRecord() {
+  document.getElementById('recDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('addModal').classList.add('show');
+}
+function submitRecord() {
+  const sector = document.getElementById('recSector').value;
+  const type   = document.getElementById('recType').value;
+  const amt    = document.getElementById('recAmt').value;
+  const desc   = document.getElementById('recDesc').value;
+  if (!amt || !desc) { alert('Please fill all fields!'); return; }
+  const btn = document.getElementById('submitRecBtn');
+  btn.textContent = '⏳ Saving...';
+  btn.disabled = true;
+  setTimeout(() => {
+    closeModal();
+    showToast(`✅ Record saved! ₹${parseInt(amt).toLocaleString('en-IN')} added to ${sector}`);
+    btn.textContent = 'Save Record';
+    btn.disabled = false;
+    // Reset
+    document.getElementById('recAmt').value = '';
+    document.getElementById('recDesc').value = '';
+  }, 1000);
+}
+function closeModal() {
+  document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('show'));
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Date ──────────────────────────────────────────────────────────────────
+
+// ── Counter animation ────────────────────────────────────────────────────
+function animateCounter(el, target, prefix='', suffix='') {
+  let start = 0;
+  const duration = 1200;
+  const step = (timestamp) => {
+    if (!start) start = timestamp;
+    const progress = Math.min((timestamp - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(eased * target);
+    el.textContent = prefix + current.toLocaleString('en-IN') + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
+// counters triggered via initApp() after login
+
+// ── Tab switching ────────────────────────────────────────────────────────
+const titles = {
+  all: ['Business Overview', 'All sectors'],
+  hospital: ['🏥 Hospital Dashboard', 'Jhansi City Hospital'],
+  shop: ['🛒 Retail Dashboard', '2 shops · Jhansi'],
+  construction: ['🏗 Construction Dashboard', '3 active projects'],
+};
+function switchSector(sector, tabEl) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sector-panel').forEach(p => p.classList.remove('active'));
+  tabEl.classList.add('active');
+  document.getElementById('panel-' + sector).classList.add('active');
+  document.getElementById('pageTitle').textContent = titles[sector][0];
+  const dateStr = document.querySelector('.today-date') ? document.querySelector('.today-date').textContent : '';
+  document.getElementById('pageSub').textContent = titles[sector][1] + ' · Today, ' + dateStr;
+  // Animate progress bars
+  setTimeout(() => {
+    document.querySelectorAll('.progress-fill').forEach(b => {
+      const w = b.style.width;
+      b.style.width = '0';
+      setTimeout(() => { b.style.width = w; }, 50);
+    });
+  }, 50);
+}
+function setTab(sector, navEl) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  navEl.classList.add('active');
+  const tabEl = document.querySelectorAll('.tab')[['all','hospital','shop','construction'].indexOf(sector)];
+  switchSector(sector, tabEl);
+}
+
+// ── Charts ───────────────────────────────────────────────────────────────
+const FONT = 'Sora';
+Chart.defaults.font.family = FONT;
+Chart.defaults.color = '#6B80965';
+
+const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+// Revenue line chart
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels: days,
+    datasets: [
+      {label:'Hospital', data:[34000,38000,29000,42000,38400,45000,39000], borderColor:'#00C48C', backgroundColor:'rgba(0,196,140,0.08)', tension:.4, fill:true, pointRadius:4, pointBackgroundColor:'#00C48C'},
+      {label:'Retail', data:[18000,22000,19000,24000,23800,27000,21000], borderColor:'#F4A300', backgroundColor:'rgba(244,163,0,0.08)', tension:.4, fill:true, pointRadius:4, pointBackgroundColor:'#F4A300'},
+      {label:'Construction', data:[80000,0,120000,0,0,160000,0], borderColor:'#FF4757', backgroundColor:'rgba(255,71,87,0.08)', tension:.4, fill:true, pointRadius:4, pointBackgroundColor:'#FF4757'},
+    ]
+  },
+  options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#8DA0B5',font:{size:11}}}}, scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096',callback:v=>'₹'+(v/1000)+'k'}}}}
+});
+
+// Donut split
+new Chart(document.getElementById('splitChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Hospital','Retail','Construction'],
+    datasets: [{data:[52,22,26], backgroundColor:['#00C48C','#F4A300','#FF4757'], borderWidth:0, hoverOffset:8}]
+  },
+  options: {responsive:true, maintainAspectRatio:false, cutout:'68%', plugins:{legend:{position:'bottom',labels:{color:'#8DA0B5',padding:14,font:{size:11}}}}}
+});
+
+// Hospital OPD trend
+new Chart(document.getElementById('hospitalChart'), {
+  type: 'bar',
+  data: {
+    labels: days,
+    datasets: [{label:'OPD Patients', data:[38,44,31,52,47,55,41], backgroundColor:'rgba(0,196,140,0.7)', borderRadius:6}]
+  },
+  options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#8DA0B5'}}}, scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096'}}}}
+});
+
+// Hospital dept donut
+new Chart(document.getElementById('hospDeptChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['OPD','IPD','Pharmacy','Lab'],
+    datasets: [{data:[38,32,20,10], backgroundColor:['#00C48C','#1A73E8','#F4A300','#7C4DFF'], borderWidth:0, hoverOffset:6}]
+  },
+  options: {responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{position:'bottom',labels:{color:'#8DA0B5',padding:10,font:{size:10}}}}}
+});
+
+// Shop comparison
+new Chart(document.getElementById('shopChart'), {
+  type: 'line',
+  data: {
+    labels: days,
+    datasets: [
+      {label:'Shop 1', data:[12000,14800,11200,16000,14200,18000,13000], borderColor:'#F4A300', backgroundColor:'rgba(244,163,0,0.08)', tension:.4, fill:true, pointRadius:4, pointBackgroundColor:'#F4A300'},
+      {label:'Shop 2', data:[8000,10200,7800,11000,9600,12000,8800], borderColor:'#1A73E8', backgroundColor:'rgba(26,115,232,0.08)', tension:.4, fill:true, pointRadius:4, pointBackgroundColor:'#1A73E8'},
+    ]
+  },
+  options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#8DA0B5',font:{size:11}}}}, scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096',callback:v=>'₹'+(v/1000)+'k'}}}}
+});
+
+// Shop categories
+new Chart(document.getElementById('shopCatChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Grains','Oils','Dairy','Snacks','Cleaning'],
+    datasets: [{data:[35,22,18,15,10], backgroundColor:['#F4A300','#1A73E8','#00C48C','#7C4DFF','#FF4757'], borderWidth:0}]
+  },
+  options: {responsive:true, maintainAspectRatio:false, cutout:'65%', plugins:{legend:{position:'bottom',labels:{color:'#8DA0B5',padding:8,font:{size:10}}}}}
+});
+
+// Construction
+new Chart(document.getElementById('constChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Nov','Dec','Jan','Feb','Mar','Apr'],
+    datasets: [
+      {label:'Revenue', data:[380000,520000,460000,610000,490000,480000], backgroundColor:'rgba(26,115,232,0.7)', borderRadius:4},
+      {label:'Expenses', data:[290000,410000,380000,490000,380000,360000], backgroundColor:'rgba(255,71,87,0.6)', borderRadius:4},
+    ]
+  },
+  options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{color:'#8DA0B5',font:{size:11}}}}, scales:{x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096',callback:v=>'₹'+(v/1000)+'k'}}}}
+});
+
+// Construction progress
+new Chart(document.getElementById('constProgChart'), {
+  type: 'bar',
+  indexAxis: 'y',
+  data: {
+    labels: ['Sipri Bazar','Civil Lines','Sadar Reno'],
+    datasets: [{label:'% Complete', data:[68,42,91], backgroundColor:['#1A73E8','#F4A300','#00C48C'], borderRadius:6, barThickness:22}]
+  },
+  options: {responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{max:100, grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096',callback:v=>v+'%'}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#6B8096'}}}}
+});
+
+// ── Simulate live data ticking ───────────────────────────────────────────
+setInterval(() => {
+  const badge = document.querySelector('.live-badge');
+  badge.style.opacity = badge.style.opacity === '0.5' ? '1' : '0.5';
+  setTimeout(() => { badge.style.opacity = '1'; }, 300);
+}, 3000);
+</script>
+</body>
+</html>
